@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+
+set -x
+# Fix locale problem
+grep LC_ALL="en_US.UTF-8" /etc/environment || {
+  echo 'LC_ALL="en_US.UTF-8"' >> /etc/environment
+}
+
+# Install the dependencies required for rbenv and Ruby
+for PACKAGE in autoconf bison build-essential libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm3 libgdbm-dev libsqlite3-dev libmysqlclient-dev nodejs
+do
+	dpkg -l ${PACKAGE} || {
+          apt-get update
+	  apt-get install -y ${PACKAGE}
+	}
+done
+
+# Install MySQL Server in a Non-Interactive mode. Default root password will be "vagrant"
+dpkg --get-selections | grep mysql-server- || {
+  export DEBIAN_FRONTEND=noninteractive
+  debconf-set-selections <<< 'mysql-server mysql-server/root_password password vagrant'
+  debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password vagrant'
+  apt-get update
+  apt-get install -y mysql-server
+}
+
+# Configure MySQL to listen on all IPs, if not configured
+grep "bind-address		= 0.0.0.0" /etc/mysql/mysql.conf.d/mysqld.cnf || {
+  cp /etc/mysql/mysql.conf.d/mysqld.cnf /etc/mysql/mysql.conf.d/mysqld.cnf.bak
+  cp /vagrant/conf/mysqld.cnf /etc/mysql/mysql.conf.d/
+  systemctl restart mysql.service
+}
+
+# Install rbenv
+[ -d /home/varant/.rbenv ] || {
+  git clone https://github.com/rbenv/rbenv.git /home/vagrant/.rbenv
+}
+
+# Change permissions from root/root to vagrant/vagrant
+[ "$(stat -c "%U %G" /home/vagrant/.rbenv)" == "vagrant vagrant" ] || {
+  chown -R vagrant.vagrant /home/vagrant/.rbenv
+}
+
+# Check if .bash_profile exists and add some configuration
+[ -f /home/vagrant/.bash_profile ] || {
+  touch /home/vagrant/.bash_profile
+  chown vagrant.vagrant /home/vagrant/.bash_profile
+}
+
+# Add rbenv to your path
+grep '.rbenv/bin' /home/vagrant/.bash_profile || {
+  echo 'export PATH="$HOME/.rbenv/bin:$PATH"' | sudo tee -a /home/vagrant/.bash_profile
+} 
+
+grep 'rbenv init -' /home/vagrant/.bash_profile || {
+ echo 'eval "$(rbenv init -)"' | sudo tee -a /home/vagrant/.bash_profile
+}
+
+# Install ruby-build
+[ -d /home/vagrant/.rbenv/plugins/ruby-build ] || {
+  git clone https://github.com/rbenv/ruby-build.git /home/vagrant/.rbenv/plugins/ruby-build
+}
+
+# Change permissions of ruby-build from root/root to vagrant/vagrant
+[ "$(stat -c "%U %G" /home/vagrant/.rbenv/plugins/ruby-build)" == "vagrant vagrant" ] || {
+  chown -R vagrant.vagrant /home/vagrant/.rbenv/plugins/ruby-build
+}
+
+
+# Install ruby
+#ruby -v | grep 2.6.3 || {
+#  sudo -u vagrant bash -c 'source /home/vagrant/.bashrc && rbenv install 2.6.3 && rbenv global 2.6.3'
+#  rbenv install 2.6.3 && rbenv global 2.6.3
+#}
+
+# Turn off local documentation for all gems we install
+[ -f /home/vagrant/.gemrc ] || {
+  > /home/vagrant/.gemrc
+}
+
+grep 'gem: --no-document' /home/vagrant/.gemrc || {
+  echo 'gem: --no-document' | sudo tee -a /home/vagrant/.gemrc	
+}
+
+# change permissions from root/root to vagrant/vagrant
+[ "$(stat -c "%U %G" /home/vagrant/.gemrc )" == "vagrant vagrant" ] || {
+  chown vagrant.vagrant /home/vagrant/.gemrc
+}
+
+
+# Install ruby
+[ "$(ruby -v | awk '{print $2}')" == "2.6.3p62"] || {
+  su - vagrant -c "source /home/vagrant/.bash_profile && rbenv install 2.6.3 && rbenv global 2.6.3"
+}
+
+# 
+su - vagrant -c "source /home/vagrant/.bash_profile && rbenv install 2.6.3 && rbenv global 2.6.3"
+# Install ruby, bundler and rails
+#sudo -u vagrant source /home/vagrant/.bash_profile
+#sudo -u vagrant  rbenv install --list
+#sudo -u vagrant  rbenv install 2.6.3
+#sudo -u vagrant  rbenv global 2.6.3
+
+
+#sudo -i -u vagrant /bin/bash -i - <<-EOF
+#  rbenv install 2.6.3
+#  rbenv global 2.6.3
+#EOF
+
+# Install bundler
+#sudo -u vagrant bash -c 'source /home/vagrant/.bashrc && gem list -i bundler || gem install bundler'
+#gem list -i bundler || gem install bundler
+
+# Install rails 
+#sudo -u vagrant bash -c 'source /home/vagrant/.bashrc && gem list -i rails || gem install rails'
+#gem list -i rails || gem install rails
+
