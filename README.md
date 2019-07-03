@@ -15,6 +15,13 @@ Vagrant VM equipped with all needed configuration to play with ruby on rails
 - [Virtualbox installed](https://www.virtualbox.org/)
 - [Vagrant installed](https://www.vagrantup.com/intro/getting-started/install.html)
 
+## Repo content
+| File                   | Description                      |
+|         ---            |                ---               |
+| conf/mysqld.cnf | mysql configuration |
+| scripts/provision.sh | provision script |
+| Vagrantfile | Vagrant template file |
+
 ## How to use?
 - `git clone https://github.com/berchev/ruby-on-rails-playground.git`
 - `cd ruby-on-rails-playground`
