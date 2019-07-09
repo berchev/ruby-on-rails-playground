@@ -14,4 +14,5 @@ gem list -i rails || {
 
 # Update gems
 gem update
-
+gem list -i fileutils && gem uninstall fileutils
+gem update --default

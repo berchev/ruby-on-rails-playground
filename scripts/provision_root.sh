@@ -56,6 +56,7 @@ grep "bind-address		= 0.0.0.0" /etc/mysql/mysql.conf.d/mysqld.cnf || {
 
 # Allow root to connect from localhost without password
 # ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+mysql -uroot -pvagrant -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';"
 
 # Install rbenv
 [ -d ${RBENV_PATH} ] || {
@@ -100,3 +101,8 @@ grep 'gem: --no-document' ${GEMRC_PATH} || {
 # change permissions from root/root to vagrant/vagrant on .gemrc
 funcPermissions $GEMRC_PATH
 
+# Install firefox
+which firefox || {
+  apt-get update
+  apt-get install -y firefox
+}
